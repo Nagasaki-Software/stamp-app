@@ -8,7 +8,7 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
-VERMILLION = (200, 16, 46, 255)  # #C8102E
+VERMILLION = (230, 0, 51, 255)  # #E60033
 DPI = 600
 MM_TO_INCH = 1 / 25.4
 PT_TO_PX = DPI / 72

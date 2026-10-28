@@ -41,6 +41,9 @@ class StampApp(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title(f"StampApp v{APP_VERSION}")
+        # 左上とタスクバーのアイコン。customtkinter は自前のアイコンを後から付けるが、
+        # 先に iconbitmap を呼んでおけば上書きしない
+        self.iconbitmap(str(ASSETS / "icon.ico"))
         self.geometry("960x720")
         ctk.set_appearance_mode("light")
 
@@ -323,7 +326,7 @@ class StampApp(ctk.CTk):
                     name_y_offset_mm=values.get("name_y_offset_mm", 0.0),
                     aff_size_scale=values.get("aff_size_scale", 1.0),
                     aff_y_offset_mm=values.get("aff_y_offset_mm", 0.0),
-                    color=values.get("stamp_color", "#C8102E"),
+                    color=values.get("stamp_color", "#E60033"),
                 )
                 stamped = stamp_pdf_in_place(
                     pdf_path=self._pdf_path,

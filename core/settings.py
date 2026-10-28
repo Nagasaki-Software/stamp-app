@@ -11,7 +11,7 @@ DEFAULT_SETTINGS = {
     "line_width_pt": 1.0,
     "font_key": "Noto Sans JP Regular",
     "selected_mark": 0,
-    "stamp_color": "#C8102E",
+    "stamp_color": "#E60033",
     # 詳細設定（手動補正）
     "name_size_scale": 1.0,
     "name_y_offset_mm": 0.0,

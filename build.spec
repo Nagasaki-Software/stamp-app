@@ -30,6 +30,7 @@ ctk_datas, ctk_binaries, ctk_hiddenimports = collect_all("customtkinter")
 datas = list(ctk_datas) + [
     ("assets/fonts", "assets/fonts"),
     ("assets/markers", "assets/markers"),
+    ("assets/icon.ico", "assets"),  # 画面左上・タスクバー用
 ]
 
 a = Analysis(
@@ -57,7 +58,7 @@ exe = EXE(
     strip=False,
     upx=False,
     console=False,
-    icon=None,
+    icon="assets/icon.ico",  # scripts/make_icon.py で作る
     version="version_info.txt",  # SAC/SmartScreen の誤検知低減のためメタデータ付与
 )
 

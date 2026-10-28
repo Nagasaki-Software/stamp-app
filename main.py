@@ -9,6 +9,14 @@ if sys.stdout is None:
 if sys.stderr is None:
     sys.stderr = open(os.devnull, "w")
 
+# タスクバーで python.exe の仲間として扱われず、アプリ自身のアイコンが出るようにする
+try:
+    import ctypes
+
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("StampApp")
+except Exception:
+    pass
+
 from gui.app import StampApp  # noqa: E402
 
 

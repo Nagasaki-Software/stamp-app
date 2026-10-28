@@ -24,7 +24,7 @@ class PreviewPanel(ctk.CTkFrame):
                 name_y_offset_mm=values.get("name_y_offset_mm", 0.0),
                 aff_size_scale=values.get("aff_size_scale", 1.0),
                 aff_y_offset_mm=values.get("aff_y_offset_mm", 0.0),
-                color=values.get("stamp_color", "#C8102E"),
+                color=values.get("stamp_color", "#E60033"),
             )
         except Exception as e:
             self.label.configure(text=f"プレビューエラー: {e}", image=None)

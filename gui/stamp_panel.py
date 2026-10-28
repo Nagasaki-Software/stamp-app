@@ -138,7 +138,7 @@ class StampPanel(ctk.CTkFrame):
 
         # 印鑑の色
         ctk.CTkLabel(self, text="印鑑の色").grid(row=6, column=0, sticky="w", padx=6, pady=4)
-        self.color_var = ctk.StringVar(value=initial.get("stamp_color", "#C8102E"))
+        self.color_var = ctk.StringVar(value=initial.get("stamp_color", "#E60033"))
         color_holder = ctk.CTkFrame(self, fg_color="transparent")
         color_holder.grid(row=6, column=1, sticky="w", padx=6, pady=4)
         self.color_swatch = ctk.CTkButton(
