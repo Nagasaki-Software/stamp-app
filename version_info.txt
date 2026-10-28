@@ -2,8 +2,8 @@
 # 参考: https://pyinstaller.org/en/stable/spec-files.html#version-resources
 VSVersionInfo(
   ffi=FixedFileInfo(
-    filevers=(1, 0, 0, 0),
-    prodvers=(1, 0, 0, 0),
+    filevers=(0, 1, 0, 0),
+    prodvers=(0, 1, 0, 0),
     mask=0x3f,
     flags=0x0,
     OS=0x40004,
@@ -19,12 +19,12 @@ VSVersionInfo(
           [
             StringStruct(u'CompanyName', u'StampApp Project'),
             StringStruct(u'FileDescription', u'PDF印鑑押印アプリ'),
-            StringStruct(u'FileVersion', u'1.0.0.0'),
+            StringStruct(u'FileVersion', u'0.1.0.0'),
             StringStruct(u'InternalName', u'StampApp'),
             StringStruct(u'LegalCopyright', u'Copyright (c) 2026'),
             StringStruct(u'OriginalFilename', u'StampApp.exe'),
             StringStruct(u'ProductName', u'StampApp'),
-            StringStruct(u'ProductVersion', u'1.0.0'),
+            StringStruct(u'ProductVersion', u'0.1.0'),
           ]
         )
       ]
