@@ -30,6 +30,9 @@ def _resource_root() -> Path:
     return Path(__file__).resolve().parent.parent
 
 
+# 版数。EXE のプロパティの版数（version_info.txt）と揃える。食い違うと build.spec が止める
+APP_VERSION = "0.1.0"
+
 ASSETS = _resource_root() / "assets"
 FONTS_DIR = ASSETS / "fonts"
 
@@ -37,7 +40,7 @@ FONTS_DIR = ASSETS / "fonts"
 class StampApp(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.title("StampApp")
+        self.title(f"StampApp v{APP_VERSION}")
         self.geometry("960x720")
         ctk.set_appearance_mode("light")
 

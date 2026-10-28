@@ -17,6 +17,14 @@ from PyInstaller.utils.hooks import collect_all
 if not os.path.exists(os.path.join("core", "_secrets.py")):
     raise SystemExit("core/_secrets.py がありません。配布ビルドには秘密値ファイルが必要です。")
 
+# 画面の版数（gui/app.py）と EXE のプロパティの版数（version_info.txt）の食い違いを止める
+import re
+
+_app_ver = re.search(r'APP_VERSION = "(.+?)"', open(os.path.join("gui", "app.py"), encoding="utf-8").read()).group(1)
+_exe_ver = re.search(r"u'ProductVersion', u'(.+?)'", open("version_info.txt", encoding="utf-8").read()).group(1)
+if _app_ver != _exe_ver:
+    raise SystemExit(f"版数が食い違っています：gui/app.py={_app_ver} / version_info.txt={_exe_ver}")
+
 ctk_datas, ctk_binaries, ctk_hiddenimports = collect_all("customtkinter")
 
 datas = list(ctk_datas) + [
