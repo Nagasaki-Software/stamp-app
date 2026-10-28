@@ -15,7 +15,7 @@ from pathlib import Path
 if hasattr(sys.stdout, "buffer"):
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
-import fitz
+import pymupdf as fitz
 from PIL import Image, ImageDraw, ImageFont
 
 MARKS = ["㊎", "㊗", "㊦", "㊨", "㊀"]

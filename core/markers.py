@@ -6,7 +6,7 @@ import io
 from pathlib import Path
 
 import cv2
-import fitz
+import pymupdf as fitz
 import numpy as np
 from PIL import Image, ImageDraw
 

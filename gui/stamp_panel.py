@@ -82,6 +82,7 @@ class StampPanel(ctk.CTkFrame):
         initial: dict,
         on_change=None,
         name_locked: bool = False,
+        on_change_name=None,
     ):
         super().__init__(master)
         self._on_change = on_change or (lambda: None)
@@ -90,10 +91,17 @@ class StampPanel(ctk.CTkFrame):
         # 名前（ロック時は編集不可＝グレーアウト）
         ctk.CTkLabel(self, text="名前").grid(row=0, column=0, sticky="w", padx=6, pady=4)
         self.name_var = ctk.StringVar(value=initial.get("name", ""))
-        self.name_entry = ctk.CTkEntry(self, textvariable=self.name_var)
-        self.name_entry.grid(row=0, column=1, sticky="ew", padx=6, pady=4)
+        name_row = ctk.CTkFrame(self, fg_color="transparent")
+        name_row.grid(row=0, column=1, sticky="ew", padx=6, pady=4)
+        name_row.columnconfigure(0, weight=1)
+        self.name_entry = ctk.CTkEntry(name_row, textvariable=self.name_var)
+        self.name_entry.grid(row=0, column=0, sticky="ew")
+        # 確定後に名前を変えるボタン（確定前は名前欄を直接書き換えられるので出さない）
+        self.change_name_btn = ctk.CTkButton(
+            name_row, text="変更", width=96, command=on_change_name or (lambda: None)
+        )
         if name_locked:
-            self.name_entry.configure(state="disabled")
+            self.lock_name()
 
         # 所属
         ctk.CTkLabel(self, text="所属/役職").grid(row=1, column=0, sticky="w", padx=6, pady=4)
@@ -251,7 +259,17 @@ class StampPanel(ctk.CTkFrame):
 
     def lock_name(self):
         """名前欄を編集不可（グレーアウト）にする。初回確定時に呼ぶ。"""
-        self.name_entry.configure(state="disabled")
+        # CTkEntry は disabled にしても見た目が変わらないため、色も変える
+        self.name_entry.configure(
+            state="disabled", text_color=("gray45", "gray60"), fg_color=("gray85", "gray25")
+        )
+        self.change_name_btn.grid(row=0, column=1, padx=(6, 0))
+
+    def set_name_changes_left(self, left: int):
+        """「変更」ボタンに残り回数を出す。0回なら押せなくする。"""
+        self.change_name_btn.configure(
+            text=f"変更（あと{left}回）", state="normal" if left > 0 else "disabled"
+        )
 
     def selected_font_path(self) -> Path:
         key = self.font_var.get()

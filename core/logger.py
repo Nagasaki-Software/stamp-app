@@ -68,6 +68,40 @@ def _archive_legacy(log_path: Path) -> Path:
     return archived
 
 
+def _data_cols(timestamp, pdf_path, pages, stamp_name, stamp_date, stamp_affiliation, hostname) -> list[str]:
+    return [
+        timestamp,
+        pdf_path,
+        ",".join(str(p) for p in pages),
+        stamp_name,
+        stamp_date,
+        stamp_affiliation,
+        hostname,
+    ]
+
+
+def next_row_hash(
+    log_path: Path,
+    timestamp: str,
+    pdf_path: str,
+    pages: list[int],
+    stamp_name: str,
+    stamp_date: str,
+    stamp_affiliation: str,
+    hostname: str,
+) -> str:
+    """append_log に同じ値を渡したときに返る row_hash を、ログに書かずに求める。
+
+    押印に成功してからログに書くため、PDFメタデータ用のハッシュを先に知る必要がある。
+    """
+    fresh = not log_path.exists() or not _is_current_format(log_path)
+    prev_hash = GENESIS_HASH if fresh else _read_last_hash(log_path)
+    return _hash_row(
+        prev_hash,
+        _data_cols(timestamp, pdf_path, pages, stamp_name, stamp_date, stamp_affiliation, hostname),
+    )
+
+
 def append_log(
     log_path: Path,
     timestamp: str,
@@ -85,15 +119,9 @@ def append_log(
     is_new = not log_path.exists()
     prev_hash = GENESIS_HASH if is_new else _read_last_hash(log_path)
 
-    data_cols = [
-        timestamp,
-        pdf_path,
-        ",".join(str(p) for p in pages),
-        stamp_name,
-        stamp_date,
-        stamp_affiliation,
-        hostname,
-    ]
+    data_cols = _data_cols(
+        timestamp, pdf_path, pages, stamp_name, stamp_date, stamp_affiliation, hostname
+    )
     row_hash = _hash_row(prev_hash, data_cols)
 
     with log_path.open("a", encoding="utf-8-sig", newline="") as f:

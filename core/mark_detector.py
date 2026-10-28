@@ -7,7 +7,7 @@
 from typing import Callable, Optional
 
 import cv2
-import fitz
+import pymupdf as fitz
 import numpy as np
 
 from core.markers import MARKER_IDS, get_dictionary

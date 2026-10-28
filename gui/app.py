@@ -8,11 +8,18 @@ from pathlib import Path
 from tkinter import filedialog, messagebox
 
 import customtkinter as ctk
-import fitz
+import pymupdf as fitz
 
 from core.font_registry import list_fonts
-from core.logger import append_log, default_log_path, verify_log
-from core.identity import apply_admin_override, load_locked_name, save_locked_name
+from core.logger import append_log, default_log_path, next_row_hash, verify_log
+from core.identity import (
+    MAX_NAME_CHANGES,
+    apply_admin_override,
+    change_locked_name,
+    load_locked_name,
+    remaining_name_changes,
+    save_locked_name,
+)
 from core.mark_detector import detect_marks
 from core.markers import export_all
 from core.pdf_stamper import stamp_pdf_in_place
@@ -31,7 +38,7 @@ def _resource_root() -> Path:
 
 
 # 版数。EXE のプロパティの版数（version_info.txt）と揃える。食い違うと build.spec が止める
-APP_VERSION = "0.1.0"
+APP_VERSION = "0.1.1"
 
 ASSETS = _resource_root() / "assets"
 FONTS_DIR = ASSETS / "fonts"
@@ -109,8 +116,11 @@ class StampApp(ctk.CTk):
             initial=self._settings,
             on_change=self._on_settings_change,
             name_locked=self._name_locked,
+            on_change_name=self._on_change_name,
         )
         self.stamp_panel.pack(fill="x", padx=4, pady=4)
+        if self._name_locked:
+            self.stamp_panel.set_name_changes_left(remaining_name_changes())
 
         self.detection_panel = DetectionPanel(
             self.left,
@@ -270,12 +280,13 @@ class StampApp(ctk.CTk):
             if not messagebox.askokcancel(
                 "StampApp 名前の確定",
                 f"この名前『{name_now}』で確定します。\n"
-                "以後の変更には管理者キーワードが必要です。よろしいですか？",
+                f"確定後に名前を変えられるのは{MAX_NAME_CHANGES}回までです。よろしいですか？",
             ):
                 return
             save_locked_name(name_now)
             self._name_locked = True
             self.stamp_panel.lock_name()
+            self.stamp_panel.set_name_changes_left(MAX_NAME_CHANGES)
         if not messagebox.askokcancel(
             "StampApp",
             f"PDFを上書きします。よろしいですか？\n対象: {target_count} ページ",
@@ -297,18 +308,19 @@ class StampApp(ctk.CTk):
         def worker():
             error = None
             stamped: list[int] = []
+            log_args = dict(
+                timestamp=log_timestamp,
+                pdf_path=str(self._pdf_path),
+                pages=pages_to_stamp,
+                stamp_name=values["name"],
+                stamp_date=values["date_str"],
+                stamp_affiliation=values["affiliation"],
+                hostname=self._hostname,
+            )
             try:
-                # ログを先に追記（row_hash を取得してPDFメタデータに埋め込むため）
-                row_hash = append_log(
-                    default_log_path(),
-                    timestamp=log_timestamp,
-                    pdf_path=str(self._pdf_path),
-                    pages=pages_to_stamp,
-                    stamp_name=values["name"],
-                    stamp_date=values["date_str"],
-                    stamp_affiliation=values["affiliation"],
-                    hostname=self._hostname,
-                )
+                # ログは押印に成功してから書く（PDFを開いたままだと上書きに失敗し、
+                # 押していないのに記録が残っていた）。PDFメタデータ用のハッシュは先に求める
+                row_hash = next_row_hash(default_log_path(), **log_args)
                 metadata_record = (
                     f"v1.1 / {log_timestamp} / {values['name']} / "
                     f"{values['affiliation']} / host: {self._hostname} / "
@@ -335,6 +347,7 @@ class StampApp(ctk.CTk):
                     stamp_diameter_pt=values["diameter_mm"] * 72 / 25.4,
                     metadata_record=metadata_record,
                 )
+                append_log(default_log_path(), **log_args)
             except Exception as e:
                 error = e
             self.after(0, self._on_execute_done, stamped, error)
@@ -357,6 +370,32 @@ class StampApp(ctk.CTk):
         )
         # 再検出（押印後はマークが消えているので 0 ページになるはず）
         self._run_detection_async()
+
+    def _on_change_name(self):
+        if self._busy or self._identity_tampered:
+            return
+        left = remaining_name_changes()
+        if left <= 0:
+            return
+        dialog = ctk.CTkInputDialog(
+            title="StampApp 名前の変更",
+            text=f"新しい名前を入れてください。\n（名前を変えられるのは、あと{left}回です）",
+        )
+        # customtkinter が 200ms 後に自前のアイコンを付けるので、その後に付け直す
+        dialog.after(300, lambda: dialog.iconbitmap(str(ASSETS / "icon.ico")))
+        new_name = (dialog.get_input() or "").strip()
+        if not new_name or new_name == self.stamp_panel.values()["name"]:
+            return
+        if not messagebox.askokcancel(
+            "StampApp 名前の変更",
+            f"名前を『{new_name}』に変えます。\n"
+            f"変えたあと、残りは{left - 1}回になります。よろしいですか？",
+        ):
+            return
+        left = change_locked_name(new_name)
+        self.stamp_panel.name_var.set(new_name)
+        self.stamp_panel.set_name_changes_left(left)
+        self._on_settings_change()
 
     def _on_export_markers(self):
         if self._busy:

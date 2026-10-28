@@ -14,7 +14,7 @@ PDF上のマーカー（ArUcoマーカー）の位置に、電子印鑑（丸印
 ## セットアップ
 
 ```
-py -V:Astral/CPython3.13.13 -m venv .venv
+py -3.13 -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
 ```

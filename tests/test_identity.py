@@ -137,3 +137,58 @@ def test_override_absent_is_none(dirs):
     status, new_name = identity.apply_admin_override(dirs)
     assert status == "none"
     assert new_name is None
+
+
+def test_name_can_be_changed_limited_times(dirs):
+    identity.save_locked_name("山田 太郎", dirs)
+    assert identity.remaining_name_changes(dirs) == identity.MAX_NAME_CHANGES
+    for i in range(identity.MAX_NAME_CHANGES):
+        left = identity.change_locked_name(f"山田 {i}", dirs)
+        assert left == identity.MAX_NAME_CHANGES - 1 - i
+    assert identity.load_locked_name(dirs) == (f"山田 {identity.MAX_NAME_CHANGES - 1}", "locked")
+    with pytest.raises(ValueError):
+        identity.change_locked_name("もう無理", dirs)
+
+
+def test_edited_change_count_is_tampered(dirs):
+    identity.save_locked_name("山田 太郎", dirs, changes_left=0)
+    for d in dirs:
+        p = d / identity.LOCK_FILENAME
+        rec = json.loads(p.read_text(encoding="utf-8"))
+        rec["changes_left"] = 5  # 署名はそのままで回数だけ書き換える
+        p.unlink()
+        p.write_text(json.dumps(rec, ensure_ascii=False), encoding="utf-8")
+    rec = json.loads(identity._reg_read())
+    rec["changes_left"] = 5
+    identity._reg_write(json.dumps(rec, ensure_ascii=False))
+    assert identity.load_locked_name(dirs) == (None, "tampered")
+    assert identity.remaining_name_changes(dirs) == 0
+
+
+def test_restoring_old_copy_does_not_add_changes(dirs):
+    identity.save_locked_name("山田 太郎", dirs)
+    old = (dirs[0] / identity.LOCK_FILENAME).read_text(encoding="utf-8")
+    identity.change_locked_name("鈴木 花子", dirs)
+    p = dirs[0] / identity.LOCK_FILENAME
+    p.unlink()
+    p.write_text(old, encoding="utf-8")  # 変更前の控えを1か所に戻す
+    assert identity.load_locked_name(dirs) == ("鈴木 花子", "locked")
+    assert identity.remaining_name_changes(dirs) == identity.MAX_NAME_CHANGES - 1
+
+
+def test_record_without_count_is_still_valid(dirs):
+    # 回数制限を入れる前に確定した人の記録は、そのまま使え、上限の回数を変えられる
+    rec = {"name": "山田 太郎", "win_user": "alice", "created": "x",
+           "sig": identity._sign("山田 太郎", "alice")}
+    for d in dirs:
+        d.mkdir(parents=True, exist_ok=True)
+        (d / identity.LOCK_FILENAME).write_text(json.dumps(rec, ensure_ascii=False), encoding="utf-8")
+    assert identity.load_locked_name(dirs) == ("山田 太郎", "locked")
+    assert identity.remaining_name_changes(dirs) == identity.MAX_NAME_CHANGES
+
+
+def test_admin_override_restores_change_count(dirs):
+    identity.save_locked_name("山田 太郎", dirs, changes_left=0)
+    _write_override(dirs[0], ADMIN_KEYWORD, "鈴木 花子")
+    identity.apply_admin_override(dirs)
+    assert identity.remaining_name_changes(dirs) == identity.MAX_NAME_CHANGES

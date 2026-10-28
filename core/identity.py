@@ -23,6 +23,8 @@ except ImportError:
     ADMIN_KEY_HASH = hashlib.sha256(b"dev-admin-keyword").hexdigest()
 
 LOCK_FILENAME = "identity.lock"
+# 確定後に本人が名前を変えられる回数（管理者が変えると元の回数に戻る）
+MAX_NAME_CHANGES = 5
 OVERRIDE_FILENAME = "admin_override.txt"
 
 
@@ -45,8 +47,12 @@ def _lock_dirs() -> list[Path]:
     return dirs
 
 
-def _sign(name: str, win_user: str) -> str:
-    msg = (name + "|" + win_user).encode("utf-8")
+def _sign(name: str, win_user: str, changes_left: Optional[int] = None) -> str:
+    # changes_left が無いのは回数制限を入れる前のレコード（従来どおりの署名）
+    text = name + "|" + win_user
+    if changes_left is not None:
+        text += "|" + str(changes_left)
+    msg = text.encode("utf-8")
     return hmac.new(SIGNING_SECRET.encode("utf-8"), msg, hashlib.sha256).hexdigest()
 
 
@@ -96,15 +102,18 @@ def _reg_read() -> Optional[str]:
         return None
 
 
-def save_locked_name(name: str, dirs: Optional[list[Path]] = None) -> None:
+def save_locked_name(
+    name: str, dirs: Optional[list[Path]] = None, changes_left: int = MAX_NAME_CHANGES
+) -> None:
     """署名付きロックレコードを全ディレクトリへ書き込む。"""
     dirs = dirs or _lock_dirs()
     win_user = _current_user()
     rec = {
         "name": name,
         "win_user": win_user,
+        "changes_left": changes_left,
         "created": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "sig": _sign(name, win_user),
+        "sig": _sign(name, win_user, changes_left),
     }
     data = json.dumps(rec, ensure_ascii=False)
     for d in dirs:
@@ -120,8 +129,8 @@ def save_locked_name(name: str, dirs: Optional[list[Path]] = None) -> None:
     _reg_write(data)  # レジストリにも保存（ファイル全削除でもロックを維持）
 
 
-def load_locked_name(dirs: Optional[list[Path]] = None) -> tuple[Optional[str], str]:
-    """戻り値 (name|None, status)。status は 'locked'/'unlocked'/'tampered'。"""
+def _load_record(dirs: Optional[list[Path]] = None) -> tuple[Optional[dict], str]:
+    """正しく署名されたレコードと status（'locked'/'unlocked'/'tampered'）を返す。"""
     dirs = dirs or _lock_dirs()
     win_user = _current_user()
 
@@ -139,6 +148,7 @@ def load_locked_name(dirs: Optional[list[Path]] = None) -> tuple[Optional[str], 
         raws.append(reg)
 
     found_for_user = False
+    best: Optional[dict] = None
     for raw in raws:
         try:
             rec = json.loads(raw)
@@ -147,12 +157,43 @@ def load_locked_name(dirs: Optional[list[Path]] = None) -> tuple[Optional[str], 
         if rec.get("win_user") != win_user:
             continue  # 他アカウントのロックは自分に無関係
         found_for_user = True
-        expected = _sign(rec.get("name", ""), win_user)
-        if hmac.compare_digest(expected, str(rec.get("sig", ""))):
-            return rec.get("name"), "locked"
+        left = rec.get("changes_left")
+        expected = _sign(rec.get("name", ""), win_user, left)
+        if not hmac.compare_digest(expected, str(rec.get("sig", ""))):
+            continue
+        rec["changes_left"] = MAX_NAME_CHANGES if left is None else int(left)
+        # 古い控えを戻して回数を増やせないよう、残り回数がいちばん少ないものを採る
+        if best is None or rec["changes_left"] < best["changes_left"]:
+            best = rec
+    if best is not None:
+        return best, "locked"
     if found_for_user:
         return None, "tampered"
     return None, "unlocked"
+
+
+def load_locked_name(dirs: Optional[list[Path]] = None) -> tuple[Optional[str], str]:
+    """戻り値 (name|None, status)。status は 'locked'/'unlocked'/'tampered'。"""
+    rec, status = _load_record(dirs)
+    return (rec["name"] if rec else None), status
+
+
+def remaining_name_changes(dirs: Optional[list[Path]] = None) -> int:
+    """確定済みの名前を、あと何回変えられるか。未確定なら上限、改ざん時は 0。"""
+    rec, status = _load_record(dirs)
+    if rec is not None:
+        return rec["changes_left"]
+    return MAX_NAME_CHANGES if status == "unlocked" else 0
+
+
+def change_locked_name(new_name: str, dirs: Optional[list[Path]] = None) -> int:
+    """確定済みの名前を変え、残り回数を1減らす。戻り値は変更後の残り回数。"""
+    rec, _ = _load_record(dirs)
+    if rec is None or rec["changes_left"] <= 0:
+        raise ValueError("名前を変更できる回数が残っていません")
+    left = rec["changes_left"] - 1
+    save_locked_name(new_name, dirs, left)
+    return left
 
 
 def apply_admin_override(dirs: Optional[list[Path]] = None) -> tuple[str, Optional[str]]:

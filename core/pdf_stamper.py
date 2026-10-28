@@ -3,7 +3,7 @@ import io
 from pathlib import Path
 from typing import Optional
 
-import fitz
+import pymupdf as fitz
 from PIL import Image
 
 MASK_PADDING_PT = 2.0

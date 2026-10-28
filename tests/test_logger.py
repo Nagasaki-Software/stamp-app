@@ -1,6 +1,6 @@
 import csv
 
-from core.logger import LOG_HEADERS, append_log, verify_log
+from core.logger import LOG_HEADERS, append_log, next_row_hash, verify_log
 
 
 def _read_rows(log_path):
@@ -104,3 +104,20 @@ def test_verify_detects_row_deletion(tmp_path):
     is_valid, tampered, _ = verify_log(log_path)
     assert is_valid is False
     assert tampered != []
+
+
+def test_next_row_hash_matches_append_without_writing(tmp_path):
+    log_path = tmp_path / "stamp_log.csv"
+    args = dict(timestamp="t", pdf_path="a.pdf", pages=[1], stamp_name="n",
+                stamp_date="d", stamp_affiliation="a", hostname="TEST-PC")
+    # 新規・追記・旧形式（ヘッダ違い）のどれでも、先に求めた値と書いた値が一致する
+    predicted = next_row_hash(log_path, **args)
+    assert not log_path.exists()
+    assert append_log(log_path, **args) == predicted
+    predicted = next_row_hash(log_path, **args)
+    assert len(_read_rows(log_path)) == 2
+    assert append_log(log_path, **args) == predicted
+    legacy = tmp_path / "old.csv"
+    legacy.write_text("timestamp,pdf_path\nx,y\n", encoding="utf-8-sig")
+    predicted = next_row_hash(legacy, **args)
+    assert append_log(legacy, **args) == predicted

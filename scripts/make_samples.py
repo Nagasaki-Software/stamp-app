@@ -6,7 +6,7 @@
 from datetime import date
 from pathlib import Path
 
-import fitz
+import pymupdf as fitz
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "samples"
