@@ -2,6 +2,8 @@
 import json
 from pathlib import Path
 
+from core.edition import DATA_NAME
+
 DEFAULT_SETTINGS = {
     "name": "山田 太郎",
     "affiliation": "営業部",
@@ -19,7 +21,7 @@ DEFAULT_SETTINGS = {
 
 
 def settings_path() -> Path:
-    return Path.home() / "Documents" / "StampApp" / "settings.json"
+    return Path.home() / "Documents" / DATA_NAME / "settings.json"
 
 
 def load_settings() -> dict:

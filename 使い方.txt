@@ -54,6 +54,8 @@ PDF上に置いた「ArUcoマーカー（白黒の四角い目印）」を自動
 
 ■ ログ
 ・押印履歴は Documents\StampApp\stamp_log.csv に記録されます
+　（GitHub の Releases で配っている版は、StampApp ではなく StampApp-Public フォルダです。
+　　管理者による名前変更のフォルダも同じです）
 ・「ログを開く」で表示、「ログ検証」で改ざんの有無を確認できます
 
 ■ 注意

@@ -12,6 +12,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from core.edition import DATA_NAME
+
 # 秘密値は Git 管理外の core/_secrets.py から読む（平文の管理者キーワードは保存しない）。
 # 無い場合は開発用の値で動く。開発用の値は公開されているため、配布ビルドには使わない。
 try:
@@ -37,9 +39,9 @@ def _lock_dirs() -> list[Path]:
     for env in ("LOCALAPPDATA", "APPDATA"):
         base = os.environ.get(env)
         if base:
-            dirs.append(Path(base) / "StampApp")
+            dirs.append(Path(base) / DATA_NAME)
     if not dirs:
-        dirs.append(Path.home() / ".stampapp")
+        dirs.append(Path.home() / f".{DATA_NAME.lower()}")
     return dirs
 
 
@@ -57,7 +59,7 @@ def _set_hidden(path: Path) -> None:
 
 
 # レジストリ保存先（HKEY_CURRENT_USER＝自分の領域、管理者権限不要）
-REG_SUBKEY = r"Software\StampApp"
+REG_SUBKEY = "Software\\" + DATA_NAME
 REG_VALUE_NAME = "identity"
 
 

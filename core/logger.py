@@ -8,6 +8,8 @@ import csv
 import hashlib
 from pathlib import Path
 
+from core.edition import DATA_NAME
+
 LOG_HEADERS = [
     "timestamp",
     "pdf_path",
@@ -25,7 +27,7 @@ GENESIS_HASH = "GENESIS"
 
 
 def default_log_path() -> Path:
-    return Path.home() / "Documents" / "StampApp" / "stamp_log.csv"
+    return Path.home() / "Documents" / DATA_NAME / "stamp_log.csv"
 
 
 def _hash_row(prev_hash: str, data_cols: list[str]) -> str:
