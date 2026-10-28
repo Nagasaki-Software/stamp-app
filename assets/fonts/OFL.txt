@@ -1,4 +1,4 @@
-Noto Sans JP: Copyright 2014-2021 Adobe (http://www.adobe.com/).
+Noto Sans JP: Copyright 2014-2021 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'.
 Noto Serif JP: Copyright 2017-2024 Adobe (http://www.adobe.com/).
 Noto is a trademark of Google Inc.
 
