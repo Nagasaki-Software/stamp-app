@@ -31,7 +31,23 @@ datas = list(ctk_datas) + [
     ("assets/fonts", "assets/fonts"),
     ("assets/markers", "assets/markers"),
     ("assets/icon.ico", "assets"),  # 画面左上・タスクバー用
+    ("licenses", "licenses"),  # 手元の部品に付いていないライセンス文（libffi など）
 ]
+
+# EXE に同梱する部品のライセンス文を licenses/<部品名>/ に入れる（配布の条件のため）
+import sys
+from importlib.metadata import distribution
+
+for _dist in ["customtkinter", "darkdetect", "packaging", "PyMuPDF", "Pillow",
+              "opencv-python-headless", "numpy", "pyinstaller"]:
+    _d = distribution(_dist)
+    for _f in _d.files or []:
+        _p = str(_f).replace("\\", "/")
+        if ".dist-info/" in _p and any(k in _p.split("/")[-1].upper() for k in ("LICEN", "COPYING", "NOTICE")):
+            _sub = _p.split(".dist-info/", 1)[1].rsplit("/", 1)
+            _dest = f"licenses/{_dist}" + (f"/{_sub[0]}" if len(_sub) == 2 else "")
+            datas.append((str(_f.locate()), _dest))
+datas.append((os.path.join(sys.base_prefix, "LICENSE.txt"), "licenses/python"))  # Python・bzip2・Tcl/Tk
 
 a = Analysis(
     ["main.py"],
@@ -44,6 +60,9 @@ a = Analysis(
     excludes=[],
     cipher=None,
 )
+
+# OpenCV に付いてくる動画用の FFmpeg（LGPL）は使わないので同梱しない
+a.binaries = [b for b in a.binaries if "opencv_videoio_ffmpeg" not in b[0]]
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=None)
 

@@ -47,4 +47,6 @@ pyinstaller build.spec
 
 ## ライセンス
 
+Copyright 2026 Nagasaki-Software
+
 [Apache License 2.0](LICENSE)。同梱しているフォントなどの他者の著作物については [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) を参照。

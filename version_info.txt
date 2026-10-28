@@ -17,11 +17,11 @@ VSVersionInfo(
         StringTable(
           u'041103a4',  # 日本語(Japanese, 0x0411) + Shift_JIS(0x3a4)
           [
-            StringStruct(u'CompanyName', u'StampApp Project'),
+            StringStruct(u'CompanyName', u'Nagasaki-Software'),
             StringStruct(u'FileDescription', u'PDF印鑑押印アプリ'),
             StringStruct(u'FileVersion', u'0.1.0.0'),
             StringStruct(u'InternalName', u'StampApp'),
-            StringStruct(u'LegalCopyright', u'Copyright (c) 2026'),
+            StringStruct(u'LegalCopyright', u'Copyright (c) 2026 Nagasaki-Software'),
             StringStruct(u'OriginalFilename', u'StampApp.exe'),
             StringStruct(u'ProductName', u'StampApp'),
             StringStruct(u'ProductVersion', u'0.1.0'),
