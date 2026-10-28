@@ -113,10 +113,16 @@ class StampApp(ctk.CTk):
         )
         self.detection_panel.pack(fill="x", padx=4, pady=4)
 
+        # ボタンは左欄の下端に固定し2段に並べる（1段だと「ログ検証」が欄からはみ出し、
+        # 詳細設定を開くと「押印実行」まで隠れていた）
         button_bar = ctk.CTkFrame(self.left)
-        button_bar.pack(fill="x", padx=4, pady=8)
+        button_bar.pack(fill="x", padx=4, pady=8, side="bottom", before=self.stamp_panel)
+        row1 = ctk.CTkFrame(button_bar, fg_color="transparent")
+        row1.pack(fill="x")
+        row2 = ctk.CTkFrame(button_bar, fg_color="transparent")
+        row2.pack(fill="x", pady=(6, 0))
         self.execute_btn = ctk.CTkButton(
-            button_bar,
+            row1,
             text="押印実行",
             command=self._on_execute,
             fg_color="#C8102E",
@@ -124,15 +130,15 @@ class StampApp(ctk.CTk):
         )
         self.execute_btn.pack(side="left", padx=4)
         self.export_btn = ctk.CTkButton(
-            button_bar,
+            row1,
             text="マーカー書き出し",
             command=self._on_export_markers,
         )
         self.export_btn.pack(side="left", padx=4)
-        ctk.CTkButton(button_bar, text="ログを開く", command=self._on_open_log).pack(
+        ctk.CTkButton(row2, text="ログを開く", command=self._on_open_log).pack(
             side="left", padx=4
         )
-        ctk.CTkButton(button_bar, text="ログ検証", command=self._on_verify_log).pack(
+        ctk.CTkButton(row2, text="ログ検証", command=self._on_verify_log).pack(
             side="left", padx=4
         )
 

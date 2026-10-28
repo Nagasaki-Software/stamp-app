@@ -10,3 +10,4 @@ tests/samples/*.pdf
 tests/samples/*.png
 StampApp.zip
 core/_secrets.py
+release/
